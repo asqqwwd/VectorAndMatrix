@@ -54,6 +54,11 @@ public:
         std::cout << "constructor ()" << std::endl;
         data_ = new T[N](); // 全0动态数组
     }
+    Vector(Vector<T, N, Args...>* p)
+    {
+        std::cout << "constructor (*)" << std::endl;
+        *this = *p;  // p左值:指针内存地址 p右值:指针内存地址中的值 *p左值:指针指向的内存地址 *p右值:指针指向的内存地址中值 
+    }  // 有问题
     Vector(Args... args)
     {
         std::cout << "constructor (args...)" << std::endl;
@@ -110,7 +115,7 @@ public:
     // 转换构造函数，即允许哪些类型转换为该类
     Vector(double value)
     {
-        std::cout << "convert ()" << std::endl;
+        std::cout << "convert i->vec" << std::endl;
         data_ = new T[N](); // 全0动态数组
         for (int i = N; i--; data_[i] = static_cast<T>(value))
             ;
@@ -118,7 +123,7 @@ public:
     // 自定义转换函数，即允许该类转化为其他哪些类型(标准类 or 非标准类)
     operator std::vector<T>()
     {
-        std::cout << "convert =" << std::endl;
+        std::cout << "convert vec->std::vector" << std::endl;
         std::vector<T> ret;
         for (int i = 0; i < N; i++)
         {
@@ -141,10 +146,10 @@ public:
     inline Vector<T, N, Args...> operator+(const Vector<T, N, Args...> &vec)
     {
         std::cout << "vec + vec" << std::endl;
-        Vector<T, N, Args...> ret = *this;
+        Vector<T, N, Args...> ret = *this;  // 这里会调用copy()
         for (int i = N; i--; ret[i] += vec[i])
             ;
-        return ret;
+        return ret;  // 这里会调用move()
     } // 这里不能返回局部变量的引用，因为局部变量调用后会销毁，但copy版本的返回值不会被销毁
     inline Vector<T, N, Args...> operator+(T value)
     {
