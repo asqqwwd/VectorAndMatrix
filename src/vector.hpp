@@ -54,17 +54,18 @@ public:
         std::cout << "constructor ()" << std::endl;
         data_ = new T[N](); // 全0动态数组
     }
-    Vector(Vector<T, N, Args...>* p)
-    {
-        std::cout << "constructor (*)" << std::endl;
-        *this = *p;  // p左值:指针内存地址 p右值:指针内存地址中的值 *p左值:指针指向的内存地址 *p右值:指针指向的内存地址中值 
-    }  // 有问题
     Vector(Args... args)
     {
         std::cout << "constructor (args...)" << std::endl;
         data_ = new T[N]();
         ArgsExtractor<T *, Args...> args_extractor(data_, args...); // 将args...中的数据提取到data_中
     }                                                               // 构造函数，允许隐式构造函数，即Vector3f a = {1,2,3}
+    Vector(Vector<T, N, Args...> *other_p) : data_(nullptr)
+    {
+        std::cout << "constructor (*)" << std::endl;
+        data_ = other_p->data_;
+        other_p->data_ = nullptr;
+    } // 基本等同于移动构造函数
     ~Vector()
     {
         std::cout << "destructor ()" << std::endl;
@@ -135,22 +136,24 @@ public:
     /* 作为成员函数重载运算符，= -> [] ()不能重载为友元函数 */
     inline T &operator[](int i)
     {
+        std::cout << "[] &" << std::endl;
         assert(i >= 0 && i < N);
         return data_[i];
     } // 可被当成左值对返回元素进行修改
     inline T operator[](int i) const
     {
+        std::cout << "[] const" << std::endl;
         assert(i >= 0 && i < N);
         return data_[i];
     } // 实例化后的const Vector会调用此函数
     inline Vector<T, N, Args...> operator+(const Vector<T, N, Args...> &vec)
     {
         std::cout << "vec + vec" << std::endl;
-        Vector<T, N, Args...> ret = *this;  // 这里会调用copy()
+        Vector<T, N, Args...> ret = *this; // 这里会调用copy()
         for (int i = N; i--; ret[i] += vec[i])
             ;
-        return ret;  // 这里会调用move()
-    } // 这里不能返回局部变量的引用，因为局部变量调用后会销毁，但copy版本的返回值不会被销毁
+        return ret; // 这里会调用move()
+    }               // 这里不能返回局部变量的引用，因为局部变量调用后会销毁，但copy版本的返回值不会被销毁
     inline Vector<T, N, Args...> operator+(T value)
     {
         std::cout << "vec + i" << std::endl;
@@ -159,14 +162,68 @@ public:
             ;
         return ret;
     }
+    inline Vector<T, N, Args...> operator-(const Vector<T, N, Args...> &vec)
+    {
+        Vector<T, N, Args...> ret = *this;
+        for (int i = N; i--; ret[i] -= vec[i])
+            ;
+        return ret;
+    }
+    inline Vector<T, N, Args...> operator-(T value)
+    {
+        Vector<T, N, Args...> ret = *this;
+        for (int i = N; i--; ret[i] -= value)
+            ;
+        return ret;
+    }
+    inline Vector<T, N, Args...> operator*(const Vector<T, N, Args...> &vec)
+    {
+        Vector<T, N, Args...> ret = *this;
+        for (int i = N; i--; ret[i] *= vec[i])
+            ;
+        return ret;
+    }
+    inline Vector<T, N, Args...> operator*(T value)
+    {
+        Vector<T, N, Args...> ret = *this;
+        for (int i = N; i--; ret[i] *= value)
+            ;
+        return ret;
+    }
+    inline Vector<T, N, Args...> operator/(const Vector<T, N, Args...> &vec)
+    {
+        Vector<T, N, Args...> ret = *this;
+        for (int i = N; i--; ret[i] /= vec[i])
+            ;
+        return ret;
+    }
+    inline Vector<T, N, Args...> operator/(T value)
+    {
+        Vector<T, N, Args...> ret = *this;
+        for (int i = N; i--; ret[i] /= value)
+            ;
+        return ret;
+    }
 
     /* 作为友元函数重载运算符，可以重载特殊计算顺序 */
     template <typename T, int N, typename... Args> // 这个必须得加，否则会报错：无法解析的外部符号
     friend Vector<T, N, Args...> operator+(T, const Vector<T, N, Args...> &);
+    template <typename T, int N, typename... Args>
+    friend Vector<T, N, Args...> operator-(T, const Vector<T, N, Args...> &);
+    template <typename T, int N, typename... Args>
+    friend Vector<T, N, Args...> operator*(T, const Vector<T, N, Args...> &);
+    template <typename T, int N, typename... Args>
+    friend Vector<T, N, Args...> operator/(T, const Vector<T, N, Args...> &);
+    template <typename T, int N, typename... Args>
+    friend std::ostream &operator<<(std::ostream &, const Vector<T, N, Args...> &);
 
-    // friend std::ostream &operator<<(std::ostream &out, const Vector<N> &v);
-    // friend Vector<N1> embed(const Vector<N2> &v, float fill = 1);
-    // friend Vector<N1> proj(const Vector<N2> &v);
+    // Vector<T, size, Args...> resize(int size, T fill = 0.f)
+    // {
+    //     Vector<T, size, T, T, T> ret = *this;
+    //     for (int i = size; i--; ret[i] = (i < N ? data_[i] : fill))
+    //         ;
+    //     return ret;
+    // }
     void self_print()
     {
         for (int i = 0; i < N; i++)
@@ -188,6 +245,40 @@ Vector<T, N, Args...> operator+(T value, const Vector<T, N, Args...> &vec)
     for (int i = N; i--; ret[i] += value)
         ;
     return ret;
+}
+template <typename T, int N, typename... Args>
+Vector<T, N, Args...> operator-(T value, const Vector<T, N, Args...> &vec)
+{
+    Vector<T, N, Args...> ret = vec;
+    for (int i = N; i--; ret[i] -= value)
+        ;
+    return ret;
+}
+template <typename T, int N, typename... Args>
+Vector<T, N, Args...> operator*(T value, const Vector<T, N, Args...> &vec)
+{
+    Vector<T, N, Args...> ret = vec;
+    for (int i = N; i--; ret[i] *= value)
+        ;
+    return ret;
+}
+template <typename T, int N, typename... Args>
+Vector<T, N, Args...> operator/(T value, const Vector<T, N, Args...> &vec)
+{
+    Vector<T, N, Args...> ret = vec;
+    for (int i = N; i--; ret[i] /= value)
+        ;
+    return ret;
+}
+template <typename T, int N, typename... Args>
+std::ostream &operator<<(std::ostream &out, const Vector<T, N, Args...> &vec)
+{
+    for (int i = 0; i < N - 1; i++)
+    {
+        out << vec[i] << " ";
+    }
+    out << vec[i] << std::endl;
+    return out;
 }
 
 /* 别名定义 */
