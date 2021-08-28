@@ -19,7 +19,7 @@ void test_constructor()
     {
         return Vector3f();
     };
-    Vector3f a3 = fun_a(); // 这里只调用了constructor(), 可能与编译器优化有关?
+    Vector3f a3 = fun_a(); // 这里只调用了constructor(), 与编译器优化有关
 
     Vector3f b1(1.1f, 2.1f, 3.1f);
     Vector3f b2(1.1f, 2.1, 3);
@@ -27,6 +27,15 @@ void test_constructor()
     Vector3f b4(Vector3f(Vector3f(1, 1, 1))); // 等于Vector b4(1,1,1), 编译器将会对其进行优化
 
     Vector3f c1(new Vector3f(1.1f, 2.1f, 3.1f));
+
+    a1.self_print();
+    a2.self_print();
+    a3.self_print();
+    b1.self_print();
+    b2.self_print();
+    b3.self_print();
+    b4.self_print();
+    c1.self_print();
 }
 
 void test_copy()
@@ -116,90 +125,8 @@ void test_different_return_type_function()
     a4 = fun2(); // constructor() move() deconstructor() move=
 }
 
-/* 参数提取器声明+定义 */
-template <typename... Args>
-class A
-{
-}; // 泛化模板，没有任何调用和它匹配
-
-template <typename T, typename... Args>
-class A<T, Args...> : public A<Args...>
-{
-public:
-    A()
-    {
-    }
-    A(T value, Args... args) : A<Args...>(args...)
-    {
-        value_ = value;
-    }
-    // void get_n(int n,auto *p)
-    // {
-    //     if (n == 0)
-    //     {
-    //         p = new A<Args...>();
-    //     }
-    //     A<Args...> next = *this;
-    //     next.get_n(n--);
-    // }
-    void copy_value(T *p)
-    {
-        *p = value_;
-        A<Args...> next = *this;
-        next.copy_value(++p);
-    }
-
-    void get_type(void **p)
-    {
-        cout << sizeof...(Args) << endl;
-        if (sizeof...(Args) == 1)
-        {
-            *p = new A<Args...>();
-        }
-        A<Args...> next = *this;
-        next.get_type(p);
-    }
-
-private:
-    T value_;
-}; // 偏特化模板，前N-1条调用与此匹配
-
-template <>
-class A<>
-{
-public:
-    template <typename T>
-    void copy_value(T **p)
-    {
-        return;
-    }
-
-    void get_type(void **p)
-    {
-        return;
-    }
-};
-
-auto get_some()
-{
-    return make_tuple(A<>());
-}
 
 int main(int argc, char **argv)
 {
-
-    // int *p = new int[3];
-    // A<int, int, int> a(1, 2, 3);
-    int a = 1;
-    void *p = &a;
-    cout << typeid(p).name()<<endl;;
-    cout << typeid(&p).name()<<endl;;
-    cout << typeid(static_cast<int *>(p)).name()<<endl;
-    // a.get_type(&p);
-    // cout << typeid(p).name() << endl;
-    // cout << typeid(static_cast<A<int> *>(p)).name() << endl;
-    // a.copy_value(p);
-    // cout << p[0] << endl;
-    // cout << p[1] << endl;
-    // cout << p[2] << endl;
+    test_constructor();
 }

@@ -11,37 +11,42 @@ class ArgsExtractor
 {
 }; // 泛化模板，没有任何调用和它匹配
 
-template <typename T, typename U, typename... Args>
-class ArgsExtractor<T *, U, Args...> : public ArgsExtractor<T *, Args...>
+template <typename T, typename... Args>
+class ArgsExtractor<T, Args...> : public ArgsExtractor<Args...>
 {
 public:
-    ArgsExtractor(T *value_p, U value, Args... args) : ArgsExtractor<T *, Args...>(++value_p, args...) // 这里不能用value_p++，因为value_p++为右值，无法被修改
+    ArgsExtractor(T value, Args... args) : ArgsExtractor<Args...>(args...)
     {
-        --value_p; // 恢复指针
-        value_ = *value_p = static_cast<U>(value);
+        value_ = static_cast<T>(value);
     }
-    const U &get_value() const
+    const T &get_value() const
     {
         return value_;
     } // const函数不能返回可变引用，只能返回const引用或者copy版本
-    const ArgsExtractor<T *, Args...> &get_next() const
+    const ArgsExtractor<Args...> &get_next() const
     {
         return *this; // 返回值隐式转换为子类引用
     }
+    void copy_value_to(T *p)
+    {
+        *p = value_;
+        (static_cast<ArgsExtractor<Args...>>(*this)).copy_value_to(++p);
+    }
 
 private:
-    U value_;
+    T value_;
 }; // 偏特化模板，前N-1条调用与此匹配
 
-template <typename T>
-class ArgsExtractor<T *>
+template <>
+class ArgsExtractor<>
 {
 public:
-    ArgsExtractor(T *value_p)
+    template <typename T>
+    void copy_value_to(T *p)
     {
-        // --value_p;  // 这里进行指针移动，没有任何效果？
-    } // 若最后args为空后仍带参数，偏特化模板中的public构造函数的必要的！
-};    // 偏特化模板，最后一条调用和此匹配
+        return;
+    }
+}; // 全特化模板，最后一条调用和此匹配
 
 /* Vector泛化模板声明+定义 */
 template <typename T, int N, typename... Args>
@@ -57,9 +62,10 @@ public:
     Vector(Args... args)
     {
         std::cout << "constructor (args...)" << std::endl;
+        ArgsExtractor<Args...> args_extractor(args...); // 继承方式展开参数包
         data_ = new T[N]();
-        ArgsExtractor<T *, Args...> args_extractor(data_, args...); // 将args...中的数据提取到data_中
-    }                                                               // 构造函数，允许隐式构造函数，即Vector3f a = {1,2,3}
+        args_extractor.copy_value_to(data_);
+    } // 构造函数，允许隐式构造函数，即Vector3f a = {1,2,3}
     Vector(Vector<T, N, Args...> *other_p) : data_(nullptr)
     {
         std::cout << "constructor (*)" << std::endl;
@@ -217,13 +223,6 @@ public:
     template <typename T, int N, typename... Args>
     friend std::ostream &operator<<(std::ostream &, const Vector<T, N, Args...> &);
 
-    // Vector<T, size, Args...> resize(int size, T fill = 0.f)
-    // {
-    //     Vector<T, size, T, T, T> ret = *this;
-    //     for (int i = size; i--; ret[i] = (i < N ? data_[i] : fill))
-    //         ;
-    //     return ret;
-    // }
     void self_print()
     {
         for (int i = 0; i < N; i++)
@@ -232,7 +231,6 @@ public:
         }
         std::cout << std::endl;
     }
-
 private:
     T *data_;
 };
@@ -296,5 +294,15 @@ using Vector4_ = Vector<T, 4, T, T, T>;
 
 using Vector3f = Vector<float, 3, float, float, float>;
 using Vector4f = Vector<float, 4, float, float, float, float>;
+
+Vector4f t4d(Vector3f vec, float fill = 0.f)
+{
+    return Vector4f(vec[0], vec[1], vec[2], fill);
+}
+
+Vector3f t3d(Vector4f vec)
+{
+    return Vector3f(vec[0], vec[1], vec[2]);
+}
 
 #endif // VECTORANDMATRIX_VECTOR_H_
