@@ -1,2 +1,1 @@
-# VectorAndMatrix
-Custom vector and matrix data structure, which is realized by the template.
+Generalized implementation of vectors and matrices
