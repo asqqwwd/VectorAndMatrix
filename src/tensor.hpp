@@ -228,7 +228,7 @@ namespace Core
         friend std::ostream &operator<<(std::ostream &, const Tensor &);
 
         template <int _NEWROW, typename U = T, typename = typename std::enable_if_t<std::is_arithmetic_v<U>>>
-        Tensor<U, _NEWROW> reshape(double fill = 0)
+        Tensor<U, _NEWROW> reshape(double fill = 0) const
         {
             Tensor<U, _NEWROW> ret;
             for (int i = _NEWROW; i--; ret[i] = (i < M ? data_[i] : fill))
@@ -237,7 +237,7 @@ namespace Core
         }
 
         template <int _NEWROW, int _NEWCOL, typename U = T, typename = typename std::enable_if_t<std::is_class_v<U>>>
-        Tensor<Tensor<typename U::type, _NEWCOL>, _NEWROW> reshape(double fill = 0)
+        Tensor<Tensor<typename U::type, _NEWCOL>, _NEWROW> reshape(double fill = 0) const
         {
             Tensor<Tensor<typename U::type, _NEWCOL>, _NEWROW> ret(fill);
             for (int i = std::min(M, _NEWROW); i--;)
@@ -264,8 +264,14 @@ namespace Core
             return ret;
         }
 
+        template <typename U = T, typename = typename std::enable_if_t<std::is_arithmetic_v<U>>>
+        Tensor<U, M> transpose() const
+        {
+            return *this;
+        }
+
         template <typename U, int N>
-        Tensor<U, M> mul(const Tensor<U, N> &vec)
+        Tensor<U, M> mul(const Tensor<U, N> &vec) const
         {
             static_assert(T::size() == N, "Input dim must be [M N]*[N L]");
 
@@ -279,7 +285,7 @@ namespace Core
         }
 
         template <int L>
-        Tensor<T, L> mul(const Tensor<Tensor<T, M>, L> &vecs)
+        Tensor<T, L> mul(const Tensor<Tensor<T, M>, L> &vecs) const
         {
             Tensor<T, L> ret;
             for (int i = L; i--;)
@@ -289,14 +295,26 @@ namespace Core
             return ret;
         } // for multiple multiplication
 
-        T mul(const Tensor<T, M> &vec)
+        template <typename U = T, typename = typename std::enable_if_t<std::is_arithmetic_v<U>>>
+        U mul(const Tensor &vec) const // Tensor<U,M> mislead compiler to infer U by param, then default template param is unused, which will cause every tensor class to have this function
         {
-            T ret = 0;
+            U ret = 0;
             for (int i = M; i--;)
             {
                 ret += data_[i] * vec[i];
             }
             return ret;
+        }
+
+        template <typename U = T, typename = typename std::enable_if_t<std::is_arithmetic_v<U>>>
+        Tensor normal() const
+        {
+            U square_sum = 0;
+            for (int i = M; i--;)
+            {
+                square_sum += data_[i] * data_[i];
+            }
+            return Tensor(*this) / std::sqrt(square_sum);
         }
 
         static constexpr int size()
