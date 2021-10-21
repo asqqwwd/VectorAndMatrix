@@ -247,35 +247,40 @@ namespace TestMatrix
         Tensor<Tensor<float, 3>, 2> a1{{1.1f, 2.1f, 3.1f}, {4.1f, 5.1f, 6.1f}};
         Tensor<Tensor<float, 4>, 3> a2{{1.1f, 2.1f, 3.1f, 4.1f}, {5.1f, 6.1f, 1.1f, 2.1f}, {3.1f, 4.1f, 5.1f, 6.1f}};
         Tensor<Tensor<float, 2>, 2> a3{{1.1f, 2.1f}, {4.1f, 5.1f}};
-        auto a4 = a1.mul(a2);
-        // auto a5 = a1.mul(a3);
+
+        Matrix4f a4{{1.1f, 2.1f, 3.1f, 4.1f}, {1.1f, 2.1f, 3.1f, 4.1}, {1.1f, 2.1f, 3.1f, 4.1f}, {1.1f, 2.1f, 3.1f, 4.1f}};
+        Matrix4f a5{{1.1f, 2.1f, 3.1f, 4.1f}, {1.1f, 2.1f, 3.1f, 4.1}, {1.1f, 2.1f, 3.1f, 4.1f}, {1.1f, 2.1f, 3.1f, 4.1f}};
 
         auto b1 = indentity<float, 3>();
         auto b2 = indentity<float, 3>();
 
         cout << "Matrix::test_mul()" << endl;
-        cout << a4;
-        cout << b1;
-        cout << b1.reshape<3, 5>().mul(b2.reshape<5, 4>());
+        // cout << a1.mul(a2);
+        // cout << a4.mul(a5);
+        // cout << b1.reshape<3, 5>().mul(b2.reshape<5, 4>());
+        // cout << a1.mul(Vector3f{1.f, 2.f, 3.f});
+        // cout << a4.mul(Vector3f{1.f, 2.f, 3.f}.reshape<4>());
+
+        cout << Vector3f{1.1f, 2.2f, 3.3f}.normal();
     }
 }
 
 int main(int argc, char **argv)
 {
-    TestVector::test_constructor();
-    TestVector::test_copy();
-    TestVector::test_move();
-    TestVector::test_convert();
-    TestVector::test_overload_operator();
-    TestVector::test_different_return_type_function();
-    TestVector::test_reshape();
-    TestVector::test_mul();
+    // TestVector::test_constructor();
+    // TestVector::test_copy();
+    // TestVector::test_move();
+    // TestVector::test_convert();
+    // TestVector::test_overload_operator();
+    // TestVector::test_different_return_type_function();
+    // TestVector::test_reshape();
+    // TestVector::test_mul();
 
-    TestMatrix::test_constructor();
-    TestMatrix::test_copy();
-    TestMatrix::test_move();
-    TestMatrix::test_convert();
-    TestMatrix::test_overload_operator();
-    TestMatrix::test_reshape();
+    // TestMatrix::test_constructor();
+    // TestMatrix::test_copy();
+    // TestMatrix::test_move();
+    // TestMatrix::test_convert();
+    // TestMatrix::test_overload_operator();
+    // TestMatrix::test_reshape();
     TestMatrix::test_mul();
 }

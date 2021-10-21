@@ -84,7 +84,7 @@ namespace Core
 
         /* Convert semantics */
         // convert constructor (i.e., what types are allowed to be converted to this class)
-        Tensor(float value)
+        Tensor(double value)
         {
             data_ = new T[M]();
             for (int i = M; i--; data_[i] = std::is_class<T>::value ? value : static_cast<T>(value))
