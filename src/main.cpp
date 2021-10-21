@@ -193,6 +193,10 @@ namespace TestMatrix
             return ret; // move()
         };
         a2 = fun1(); // constuctor() move() move=
+
+        cout << "Matrix::test_move()" << endl;
+        a2 = a1;
+        cout << a2;
     }
 
     void test_convert()
